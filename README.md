@@ -1,6 +1,6 @@
 # stm32f4-5510LCD-video-player
-A simple STM32F429 program plays video on a Nokia 5510 LCD and plays audio using the internal DAC
-
+**A simple STM32F429 program plays video on a Nokia 5510 LCD and plays audio using the internal DAC
+**
 
 
 This is an STM32F429 program that displays frames(20FPS) read from an SD card on a Nokia 5510 LCD while playing audio that is also read from the SD card. FATFS and the SDIO interface are used to handle the SD card. 
