@@ -1,0 +1,8 @@
+lcd_funcs.c:11:6:LCD_write_command	24	static
+lcd_funcs.c:20:6:LCD_init	32	static
+lcd_funcs.c:33:6:LCD_clear	32	static
+lcd_funcs.c:48:6:LCD_write_byte	24	static
+lcd_funcs.c:57:6:LCD_write_bitmap	0	static
+lcd_funcs.c:74:6:LCD_set_cursor	32	static
+lcd_funcs.c:90:6:LCD_write_BMP	1688	static
+lcd_funcs.c:153:6:LCD_write_BMP_array	536	static

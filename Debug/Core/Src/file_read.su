@@ -1,0 +1,2 @@
+file_read.c:11:10:read32	8	static
+file_read.c:20:10:read16	8	static

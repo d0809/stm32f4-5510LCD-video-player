@@ -1,0 +1,10 @@
+user_diskio_spi.c:206:5:rcvr_datablock	48	static
+user_diskio_spi.c:206:5:rcvr_datablock.constprop	48	static
+user_diskio_spi.c:263:6:send_cmd	56	static
+user_diskio_spi.c:90:6:SPI_Timer_On	8	static
+user_diskio_spi.c:95:9:SPI_Timer_Status	8	static
+user_diskio_spi.c:322:16:USER_SPI_initialize	72	static
+user_diskio_spi.c:378:16:USER_SPI_status	0	static
+user_diskio_spi.c:393:16:USER_SPI_read	32	static
+user_diskio_spi.c:432:16:USER_SPI_write	64	static
+user_diskio_spi.c:473:16:USER_SPI_ioctl	64	static
