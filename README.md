@@ -13,4 +13,6 @@ The audio section on the other hand is simpler in comparison. The program reads 
 
 The audio and frame buffers are stored in CCMRAM(core-coupled memory) for extra speed, this was achieved by modifying the linker script and the startup file.
 
+Audacity was used to resample audio and export it as raw 8-bit PCM. FFMPEG and mogrify were used to extract individual frames as BMP files and turn them into 1-bit monochrome images respectively.
+
 This program comes with no guarantees whatsoever and it may contain errors or bugs as I am not a professional programmer or embedded developer. If you notice any issues with it or happen to have a question, please contact me.
