@@ -198,14 +198,14 @@ int main(void)
 
    //20fps, 50 ms
    uint32_t delay = 50;
-   unsigned int frames = f_size(&fil)/706;//filesie / frame size
+   unsigned int frames = f_size(&fil)/706;//filesize / frame size = total frames
    printf("%u frames \r\n", frames);
    //msb = bottom pixel
 
 
    /*
-    *TIM14 used for audio interrupt, uses APB1 as source, 45MHz -> interrupt routine in
-    *audio sample rate 45000 psc = 999
+    *TIM2 used for audio interrupt, uses APB1 as source, 45MHz -> interrupt routine in
+    *audio sample rate 22500
     *stack put in ccmram, see linker scripts (ram)
     *startup modified for ccmram usage
     */
@@ -222,37 +222,10 @@ int main(void)
 	  unsigned int frame = 1;//frame counter
 	  uint32_t prev = 0;//frame time counter
 	  uint8_t flag = 0;//frame read flag
-	  uint32_t prevus = 0;//frame time counter
-
 
 	  while(frame < frames +1){
-		 /* uint32_t time;
-		  for(unsigned int i = 1; i <21; ++i){
-			  time = TIM5->CNT;
-			  f_read(&fila, audbuffer, 512*i, &bra);
-			  time = TIM5->CNT - time;
-			  double bps = ((double)(512*i))/(((double)time)*(double)(0.000001));
-			  printf("Read %u bytes in %u microseconds, speed: %f megabytes per second \r\n", i*512, (unsigned int)time, bps/(double)1024/(double)1024);
-		  }
-		  HAL_Delay(2000);
-		  printf("\r\n");*/
-
-		 /*if(audioflag){//sample => DAC
-			  GPIOB->ODR ^= 1<<14;
-			  audioflag = 0;
-			  DAC1->DHR8R1 = audbuffer[audiocounter];
-			  ++audiocounter;
-		  }
-		  /*if(TIM2->CNT - prevus > 22){
-			  DAC1->DHR8R1 = audbuffer[audiocounter];
-			  ++audiocounter;
-			  prevus = TIM2->CNT;
-		  }*/
-
 		  if(audiocounter == buffersize/2){//first half played, update first half of the buffer
-			  	  	  //uint32_t time = TIM5->CNT;
 		  			  f_read(&fila, audbuffer, buffersize/2, &bra);
-		  			 // printf("%u\r\n", TIM5->CNT-time);
 		  }
 		  if(audiocounter == buffersize){//second half played, update like before
 		  			  f_read(&fila, &audbuffer[buffersize/2], buffersize/2, &bra);
@@ -274,12 +247,10 @@ int main(void)
 			  flag = 0;
 		  }
 	  }
-  	  //free(buffer);
-  	// free(audbuffer);
   }
 
 	  f_close(&fil);
-	  f_mount(0, "", 0);
+	  f_mount(0, "", 0);//close file and umount sd card after video has been played
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

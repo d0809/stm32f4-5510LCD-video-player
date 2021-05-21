@@ -1555,8 +1555,8 @@ void LCD_write_BMP_array(SPI_HandleTypeDef *hspi, const uint8_t * bmparray){
  80010f0:	40021000 	.word	0x40021000
 
 080010f4 <HAL_TIM_PeriodElapsedCallback>:
-//volatile uint8_t  audbuffer[1024*20] ={0};
-//volatile uint16_t audiocounter = 0;
+uint8_t buffer[10*706] CCMRAM = {0};//video buffer in ccmram
+volatile uint32_t audiocounter CCMRAM = 0;//audio sample counter
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -1570,12 +1570,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  80010fe:	681a      	ldr	r2, [r3, #0]
  8001100:	8809      	ldrh	r1, [r1, #0]
  8001102:	4291      	cmp	r1, r2
-			audiocounter = 0;
+			audiocounter = 0;//reset counter when the end of the buffer has been reached
  8001104:	bf9c      	itt	ls
  8001106:	2200      	movls	r2, #0
  8001108:	601a      	strls	r2, [r3, #0]
 		}
-		  //GPIOB->ODR ^= 1<<14;
 		  DAC1->DHR8R1 = audbuffer[audiocounter];
  800110a:	681a      	ldr	r2, [r3, #0]
  800110c:	4906      	ldr	r1, [pc, #24]	; (8001128 <HAL_TIM_PeriodElapsedCallback+0x34>)

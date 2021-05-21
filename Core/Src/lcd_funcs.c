@@ -13,7 +13,7 @@ void LCD_write_command(SPI_HandleTypeDef *hspi, const uint8_t command){
 
 	  HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_RESET);
 	  HAL_SPI_Transmit(hspi, &command, 1, 100);//send command
-	  while(HAL_SPI_GetState(hspi) != HAL_SPI_STATE_READY);
+	  while(HAL_SPI_GetState(hspi) != HAL_SPI_STATE_READY);//wait for transmission to finish
 	  HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_SET);
 }
 
@@ -22,7 +22,7 @@ void LCD_init(SPI_HandleTypeDef *hspi){
 	  HAL_GPIO_WritePin(GPIOE, RST_Pin, GPIO_PIN_RESET);//reset lcd driver
 	  HAL_GPIO_WritePin(GPIOE, RST_Pin, GPIO_PIN_SET);
 
-	  uint8_t init[] ={0x21, 0xD0, 0b00100000, 0b00001100};//bytelar dikey yaziliyor
+	  uint8_t init[] ={0x21, 0xD0, 0b00100000, 0b00001100};//an array of LCD commands, refer to the datasheet
 	  //chip active, horizontal addressing, complex instruction set, contrast, basic instructions,
 	  for(unsigned int i = 0; i < sizeof(init)/sizeof(uint8_t); ++i){
 		  LCD_write_command(hspi, init[i]);
@@ -34,18 +34,18 @@ void LCD_clear(SPI_HandleTypeDef *hspi){
 	  //48hx84v 48/8=6 6*84=504, clear display
 	  uint8_t clear = 0x00;
 	  HAL_GPIO_WritePin(GPIOE, DC_Pin, GPIO_PIN_SET);//data mode
+	  HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_RESET);
 
-	  for(unsigned int i = 0; i < 504; ++i){
-		HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_RESET);
-		HAL_SPI_Transmit(hspi, &clear, 1, 100);//random data
+	  for(unsigned int i = 0; i < 504; ++i){//write 504 empty bytes to clean display
+		HAL_SPI_Transmit(hspi, &clear, 1, 100);
 		while(HAL_SPI_GetState(hspi) != HAL_SPI_STATE_READY);
-		HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_SET);//turn chip off after setup
 	  }
+	  HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_SET);
 
 }
 
 
-void LCD_write_byte(SPI_HandleTypeDef *hspi, const uint8_t data){
+void LCD_write_byte(SPI_HandleTypeDef *hspi, const uint8_t data){//writes a single byte to the display
 	  HAL_GPIO_WritePin(GPIOE, DC_Pin, GPIO_PIN_SET);//data mode
 
 	  HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_RESET);
@@ -54,20 +54,16 @@ void LCD_write_byte(SPI_HandleTypeDef *hspi, const uint8_t data){
 	  HAL_GPIO_WritePin(GPIOE, CE_Pin, GPIO_PIN_SET);
 }
 
-void LCD_write_bitmap(SPI_HandleTypeDef *hspi, const uint8_t* data){
-	  //LCD_write_command(hspi, 0b00100000);//make sure horizontal addressing is being used
-	  	  //HAL_GPIO_WritePin(GPIOE, DC_Pin, GPIO_PIN_SET);//data mode
-
+void LCD_write_bitmap(SPI_HandleTypeDef *hspi, const uint8_t* data){//accepts a uint8_t array and writes it to the display
 		  GPIOE->ODR |= DC_Pin;
 		  GPIOE->ODR &= ~CE_Pin;//Ce low
-		 //HAL_SPI_Transmit(hspi, data, 504, 100);//send data
-		  //while(HAL_SPI_GetState(hspi) != HAL_SPI_STATE_READY);//sizeof(data)/sizeof(uint8_t)
+
 		  for(uint16_t i = 0; i < 504; ++i){
 			  hspi->Instance->DR = data[i];
-			  while(!(hspi->Instance->SR & SPI_SR_TXE));//wait until TXE=1
+			  while(!(hspi->Instance->SR & SPI_SR_TXE));//wait until TXE=1 after each byte
 		 }
 
-		  while(hspi->Instance->SR & SPI_SR_BSY);//wait for transmission to end
+		  while(hspi->Instance->SR & SPI_SR_BSY);//wait for transmission to end, the busy flag only needs to be checked after the transmission is over
 		  GPIOE->ODR |= CE_Pin;//Ce high
 }
 
@@ -78,7 +74,7 @@ void LCD_set_cursor(SPI_HandleTypeDef *hspi, const uint8_t y, const uint8_t x){
 	if(ycoor < 0) ycoor = 0;
 	if(ycoor > 5) ycoor = 5;
 	if(xcoor < 0) xcoor = 0;
-	if(xcoor > 83) xcoor = 83;
+	if(xcoor > 83) xcoor = 83;//check if coordinates are acceptable
 
 	ycoor = 0b01000000 | ycoor;
 	xcoor = 0b10000000 | xcoor;
@@ -87,7 +83,7 @@ void LCD_set_cursor(SPI_HandleTypeDef *hspi, const uint8_t y, const uint8_t x){
 	LCD_write_command(hspi, xcoor); //send x cursor command
 }
 
-void LCD_write_BMP(SPI_HandleTypeDef *hspi, FRESULT fres, char * filename){
+void LCD_write_BMP(SPI_HandleTypeDef *hspi, FRESULT fres, const char * filename){
 		   uint8_t screendata[504] = {0};
 	   	   FIL fil; 		//File handle
 		   UINT br; //read count
@@ -98,28 +94,25 @@ void LCD_write_BMP(SPI_HandleTypeDef *hspi, FRESULT fres, char * filename){
 		 	while(1);
 		   }
 
-		   //printf("Opened '%s' for reading.\r\n", filename);
-
 		    BYTE readBuf[10]  = {0};
 
-		     //fil = bman.bmp, opened previously
 		     f_read(&fil, readBuf, 2, &br);//read BMP signature,
 		     if(readBuf[0] == 0x42 && readBuf[1] == 0x4D) {
-		    	// printf("BMP signature found. \r\n");
+		    	printf("BMP signature found. \r\n");
 		     }
 		     else{
 		  	   printf("Not a BMP file.\r\n");
-		  	   while(1);
+		  	   return;
 		     }
 		     uint32_t filesize = read32(&fil, readBuf, &br);
-		     //printf("Filesize is %u\r\n", (unsigned int)filesize);
+		     printf("Filesize is %u\r\n", (unsigned int)filesize);
 
 		     read32(&fil, readBuf, &br); //skip 4 reserved bytes
 
 		     uint32_t pixeloffset = read32(&fil, readBuf, &br);//read pixel offset, 4 bytes
-		     //printf("Pixel offset is %X.\r\n", (unsigned int)pixeloffset);
+		     printf("Pixel offset is %X.\r\n", (unsigned int)pixeloffset);
 		     uint32_t dibsize =read32(&fil, readBuf, &br);
-		     //printf("DIB header size is %u\r\n", (unsigned int)dibsize);
+		     printf("DIB header size is %u\r\n", (unsigned int)dibsize);
 
 		     //uint32_t pixeloffset =0x82;
 		     uint8_t bmpdata[576] = {0};//576 byte array, will store bmp pixel array
